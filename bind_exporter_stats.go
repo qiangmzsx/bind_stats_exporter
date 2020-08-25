@@ -19,7 +19,12 @@ var (
 	viewReg, _ = regexp.Compile("[\\(|\\)|\\<|/]")
 	numReg, _  = regexp.Compile(`[0-9]+`)
 	letReg, _  = regexp.Compile(`[0-9a-zA-Z()><-]+`)
-	bootTime   = prometheus.NewDesc(
+	up         = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "", "up"),
+		"Was the Bind instance query successful?",
+		nil, nil,
+	)
+	bootTime = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "boot_time_seconds"),
 		"Start time of the BIND process since unix epoch in seconds.",
 		nil, nil,
@@ -316,6 +321,7 @@ func NewStatsCollector(fd, rndc string) prometheus.Collector {
 
 // Describe implements prometheus.Collector.
 func (c *statsCollector) Describe(ch chan<- *prometheus.Desc) {
+	ch <- up
 	ch <- bootTime
 	ch <- nameServerStatistics
 	ch <- incomingQueries
@@ -343,11 +349,17 @@ func (c *statsCollector) Collect(ch chan<- prometheus.Metric) {
 	log.Info("sh info:", outInfo.String())
 	if err != nil {
 		log.Error(err)
+		ch <- prometheus.MustNewConstMetric(
+			up, prometheus.GaugeValue, 0,
+		)
 		return
 	}
 	contentBs, err := ioutil.ReadFile(c.filePath)
 	if err != nil || len(contentBs) < 10 {
 		log.Error(err)
+		ch <- prometheus.MustNewConstMetric(
+			up, prometheus.GaugeValue, 0,
+		)
 		return
 	}
 	statsInfo := ParserStats(string(contentBs))
@@ -469,6 +481,9 @@ func (c *statsCollector) Collect(ch chan<- prometheus.Metric) {
 			}
 		}
 	}
+	ch <- prometheus.MustNewConstMetric(
+		up, prometheus.GaugeValue, 1,
+	)
 }
 
 func getHistogram(md Module) (map[float64]uint64, uint64, error) {
