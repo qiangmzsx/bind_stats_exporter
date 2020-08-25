@@ -66,9 +66,9 @@ func main() {
 	http.Handle(*metricsPath, promhttp.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`<html>
-             <head><title>Bind Exporter</title></head>
+             <head><title>Bind Stats Exporter</title></head>
              <body>
-             <h1>Bind Exporter</h1>
+             <h1>Bind Stats Exporter</h1>
              <p><a href='` + *metricsPath + `'>Metrics</a></p>
              </body>
              </html>`))
