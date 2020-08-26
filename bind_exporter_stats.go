@@ -137,7 +137,7 @@ var (
 		[]string{"view", "type"}, nil,
 	)
 	cacheStatistics = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, CACHE_STATS, "cache_stats"),
+		prometheus.BuildFQName(namespace, CACHE_STATS, "statistics"),
 		"Cache Statistics.",
 		[]string{"view", "type"}, nil,
 	)
@@ -240,6 +240,7 @@ var (
 		"NXDOMAIN received":            "NXDOMAIN",
 		"SERVFAIL received":            "SERVFAIL",
 		"FORMERR received":             "FORMERR",
+		"Mismatch responses received":  "Mismatch",
 		"Other errors received":        "OtherError",
 		"EDNS(0) query failures":       "EDNS0Fail",
 		"IPv4 NS address fetches":      "GlueFetchv4",
@@ -295,9 +296,9 @@ var (
 		"cache heap memory in use":                       "UseHeapMemory",
 		"cache heap memory total":                        "TotalHeapMemory",
 		"cache hits":                                     "Hits",
-		"cache hits from query":                          "QueryHits",
+		"cache hits (from query)":                        "QueryHits",
 		"cache misses":                                   "Misses",
-		"cache misses from query":                        "QueryMisses",
+		"cache misses (from query)":                      "QueryMisses",
 		"cache records deleted due to TTL expiration":    "DelTTL",
 		"cache records deleted due to memory exhaustion": "DelMem",
 		"cache tree highest memory in use":               "UseTreeHighest",
@@ -486,28 +487,30 @@ func (c *statsCollector) Collect(ch chan<- prometheus.Metric) {
 	)
 }
 
+type RttHistog struct {
+	key string
+	le  float64
+}
+
+var (
+	rttList = []RttHistog{
+		RttHistog{"queries with RTT < 10ms", 10},
+		RttHistog{"queries with RTT 10-100ms", 100},
+		RttHistog{"queries with RTT 100-500ms", 500},
+		RttHistog{"queries with RTT 500-800ms", 800},
+		RttHistog{"queries with RTT 800-1600ms", 1600},
+		RttHistog{"queries with RTT > 1600ms", 2000},
+	}
+)
+
 func getHistogram(md Module) (map[float64]uint64, uint64, error) {
 	buckets := map[float64]uint64{}
 	var count uint64
-	for key, value := range md.Info {
-		b := float64(0)
-		if strings.Contains(key, "queries with RTT") {
-			if strings.Contains(key, "10ms") {
-				b = 0
-			} else if strings.Contains(key, "100ms") {
-				b = 10
-			} else if strings.Contains(key, "500ms") {
-				b = 100
-			} else if strings.Contains(key, "800ms") {
-				b = 500
-			} else if strings.Contains(key, "-1600ms") {
-				b = 800
-			} else {
-				b = 1600
-			}
+	for _, rtt := range rttList {
+		if value, ok := md.Info[rtt.key]; ok {
+			buckets[rtt.le] = count + uint64(value)
+			count += uint64(value)
 		}
-		buckets[b] = count + uint64(value)
-		count += uint64(value)
 	}
 	return buckets, count, nil
 }
