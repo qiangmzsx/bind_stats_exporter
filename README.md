@@ -1,5 +1,5 @@
 # bind_stats_exporter
-Get BIND DNS stats from named_stats file and prometheus.
+Get BIND DNS stats from named_stats file and send prometheus.
 
 # Why do we need bind_stats_exporter?
 We all know that [bind_exporter](https://github.com/prometheus-community/bind_exporter)  , in use we find that the `Bind DNS` is collected through the interface, whether it is using `XML` or `json`. It will cause the `Bind DNS` to be stuck. In other words, the collection indicator affects the availability of `Bind DNS`.
