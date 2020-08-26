@@ -36,7 +36,7 @@ var (
 	)
 	outgoingQueries = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "outgoing_queries_total"),
-		"Name Server Statistics Counters.",
+		"Outgoing Queries.",
 		[]string{"view", "type"}, nil,
 	)
 	incomingQueries = prometheus.NewDesc(
