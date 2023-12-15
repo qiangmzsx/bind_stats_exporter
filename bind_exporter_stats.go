@@ -459,18 +459,20 @@ func (c *statsCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	// Cache DB RRsets
 	if mds, ok := statsInfo.ModuleMap["Cache DB RRsets"]; ok {
-		for key, value := range md.Info {
-			/*if len(md.View) < 1 {
-				continue
-			}*/
-			idx := strings.Index(md.View, "(")
-			if idx < 0 {
-				idx = len(md.View)
+		for _, md := range mds {
+			for key, value := range md.Info {
+				/*if len(md.View) < 1 {
+					continue
+				}*/
+				idx := strings.Index(md.View, "(")
+				if idx < 0 {
+					idx = len(md.View)
+				}
+				view := strings.Trim(md.View[0:idx], " ")
+				ch <- prometheus.MustNewConstMetric(
+					cacheRRsetsStats, prometheus.CounterValue, value, view, key,
+				)
 			}
-			view := strings.Trim(md.View[0:idx], " ")
-			ch <- prometheus.MustNewConstMetric(
-				cacheRRsetsStats, prometheus.CounterValue, value, view, key,
-			)
 		}
 	}
 	// Cache Statistics
@@ -538,7 +540,7 @@ func ParserStats(content string) *StatusInfo {
 	sub := ""
 	stats := StatusInfo{
 		ModuleMap: map[string][]Module{},
-	} //map[string][]Module{}
+	} // map[string][]Module{}
 	ts := []string{}
 	im := &Module{
 		Info: map[string]float64{},

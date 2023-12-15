@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -225,6 +226,30 @@ var (
                    2 !MX
                    1 !AAAA
                    2 NXDOMAIN
+[View: default]
+70 A
+11 NS
+2 SOA
+64 AAAA
+5 DS
+14 RRSIG
+1 NSEC
+2 DNSKEY
+1 !NS
+2 !AAAA
+1 !DS
+[View: ]
+70 A
+11 NS
+2 SOA
+64 AAAA
+5 DS
+14 RRSIG
+1 NSEC
+2 DNSKEY
+1 !NS
+2 !AAAA
+1 !DS
 [View: _bind (Cache: _bind)]
 ++ Socket I/O Statistics ++
            331732008 UDP/IPv4 sockets opened
@@ -472,4 +497,25 @@ func Test_ParserStats(t *testing.T) {
 	si := ParserStats(str)
 	bs, _ := json.Marshal(si)
 	t.Log(string(bs))
+}
+
+func Test_ParserStatsForRRsets(t *testing.T) {
+
+	statsInfo := ParserStats(str)
+	// Cache DB RRsets
+	if mds, ok := statsInfo.ModuleMap["Cache DB RRsets"]; ok {
+		for _, md := range mds {
+			for key, value := range md.Info {
+				/*if len(md.View) < 1 {
+					continue
+				}*/
+				idx := strings.Index(md.View, "(")
+				if idx < 0 {
+					idx = len(md.View)
+				}
+				view := strings.Trim(md.View[0:idx], " ")
+				t.Log(value, view, key)
+			}
+		}
+	}
 }
