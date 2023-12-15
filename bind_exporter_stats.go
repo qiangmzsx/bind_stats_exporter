@@ -459,13 +459,18 @@ func (c *statsCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	// Cache DB RRsets
 	if mds, ok := statsInfo.ModuleMap["Cache DB RRsets"]; ok {
-		for _, md := range mds {
-			for key, value := range md.Info {
-				view := strings.Trim(md.View[0:strings.Index(md.View, "(")], " ")
-				ch <- prometheus.MustNewConstMetric(
-					cacheRRsetsStats, prometheus.CounterValue, value, view, key,
-				)
+		for key, value := range md.Info {
+			/*if len(md.View) < 1 {
+				continue
+			}*/
+			idx := strings.Index(md.View, "(")
+			if idx < 0 {
+				idx = len(md.View)
 			}
+			view := strings.Trim(md.View[0:idx], " ")
+			ch <- prometheus.MustNewConstMetric(
+				cacheRRsetsStats, prometheus.CounterValue, value, view, key,
+			)
 		}
 	}
 	// Cache Statistics
