@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"gitlab.luojilab.com/zeroteam/common/log"
+	"github.com/prometheus/common/log"
 )
 
 // ftp://ftp.isc.org/isc/bind9/9.9.0/doc/arm/Bv9ARM.ch06.html
